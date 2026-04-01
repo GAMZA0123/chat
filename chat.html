@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>투명 채팅창 위젯</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden; /* 스크롤바 숨김 */
+        font-family: 'Pretendard', sans-serif;
+        background-color: transparent; 
+    }
+
+    /* 채팅들이 쌓이는 전체 영역 (아래에서 위로 올라가도록 설정) */
+    #chat-container {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 400px;
+        height: 500px; /* 채팅창 높이 (OBS에서 조절 가능) */
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end; /* 채팅이 아래부터 쌓임 */
+        gap: 8px;
+    }
+
+    /* 개별 채팅 박스 디자인 */
+    .chat-message {
+        background: rgba(0, 0, 0, 0.6); /* 반투명 검정 배경 */
+        color: white;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 16px;
+        line-height: 1.4;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        word-break: break-all;
+        
+        /* 톡 튀어나오는 애니메이션 */
+        animation: slideIn 0.3s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+</head>
+<body>
+
+<div id="chat-container"></div>
+
+<script>
+    // 파이썬 로봇과 연결
+    function connectBot() {
+        const socket = new WebSocket('ws://localhost:8765');
+        
+        socket.onopen = () => console.log("채팅창 위젯 연결됨!");
+        socket.onclose = () => setTimeout(connectBot, 3000);
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            // 로봇이 보낸 데이터 중 '채팅(chat)' 데이터만 골라서 화면에 띄움
+            if (data.type === 'chat') {
+                addChat(data.message);
+            }
+        };
+    }
+
+    function addChat(text) {
+        const container = document.getElementById('chat-container');
+        const chatEl = document.createElement('div');
+        chatEl.className = 'chat-message';
+        chatEl.innerText = text;
+
+        container.appendChild(chatEl);
+
+        // 채팅이 너무 많아지면(예: 15개 초과) 맨 위(오래된) 채팅 삭제
+        if (container.children.length > 15) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    connectBot();
+</script>
+</body>
+</html>
