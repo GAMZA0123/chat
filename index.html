@@ -2,36 +2,34 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>알람 위젯</title>
+    <title>채팅 위젯</title>
     <style>
         body { margin: 0; overflow: hidden; background: transparent; font-family: 'Pretendard', sans-serif; }
-        #alert-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 550px; display: flex; flex-direction: column; gap: 12px; }
-        .alert-box {
-            background: rgba(20, 20, 25, 0.9);
-            border-left: 6px solid #ff6b6b;
-            color: white; padding: 20px; border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-            animation: slideDown 0.5s ease-out forwards;
+        #chat-container { position: absolute; bottom: 20px; left: 20px; width: 380px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-bubble {
+            background: rgba(45, 45, 50, 0.85);
+            padding: 12px 18px; border-radius: 20px; border-bottom-left-radius: 4px;
+            color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: bubbleUp 0.3s ease-out;
         }
-        .title { font-weight: 800; font-size: 15px; margin-bottom: 6px; text-transform: uppercase; }
-        .message { font-size: 20px; font-weight: 600; line-height: 1.4; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        .nick { font-size: 14px; font-weight: 800; color: #feca57; margin-bottom: 4px; }
+        .msg { font-size: 17px; line-height: 1.5; word-break: break-all; }
+        @keyframes bubbleUp { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="alert-container"></div>
+    <div id="chat-container"></div>
     <script>
         const socket = new WebSocket('ws://localhost:8765');
         socket.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            if (data.type === 'alert') {
-                const container = document.getElementById('alert-container');
+            if (data.type === 'chat') {
+                const container = document.getElementById('chat-container');
                 const div = document.createElement('div');
-                div.className = 'alert-box';
-                div.style.borderLeftColor = data.color;
-                div.innerHTML = `<div class="title" style="color:${data.color}">${data.title}</div><div class="message">${data.message}</div>`;
+                div.className = 'chat-bubble';
+                div.innerHTML = `<div class="nick">${data.nickname}</div><div class="msg">${data.message}</div>`;
                 container.appendChild(div);
-                setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 5000);
+                if (container.children.length > 15) container.removeChild(container.firstChild);
             }
         };
     </script>
