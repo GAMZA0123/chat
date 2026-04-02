@@ -2,44 +2,38 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>채팅 전용 위젯</title>
+    <title>알람 위젯</title>
     <style>
         body { margin: 0; overflow: hidden; background: transparent; font-family: 'Pretendard', sans-serif; }
-        #chat-container { position: absolute; bottom: 20px; left: 20px; width: 350px; display: flex; flex-direction: column; gap: 8px; }
-        .chat-bubble {
-            background: rgba(40, 40, 45, 0.9);
-            padding: 10px 15px;
-            border-radius: 15px;
-            border-bottom-left-radius: 2px;
-            color: white;
-            animation: fadeInUp 0.3s ease-out;
-            max-width: 90%;
+        #alert-container { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 550px; display: flex; flex-direction: column; gap: 12px; }
+        .alert-box {
+            background: rgba(20, 20, 25, 0.9);
+            border-left: 6px solid #ff6b6b;
+            color: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            animation: slideDown 0.5s ease-out forwards;
         }
-        .nick { font-size: 13px; font-weight: bold; color: #feca57; margin-bottom: 3px; }
-        .msg { font-size: 15px; word-break: break-all; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .title { font-weight: 800; font-size: 15px; margin-bottom: 6px; text-transform: uppercase; }
+        .message { font-size: 20px; font-weight: 600; line-height: 1.4; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div id="chat-container"></div>
+    <div id="alert-container"></div>
     <script>
-        function connect() {
-            const socket = new WebSocket('ws://localhost:8765');
-            socket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                // 🚨 핵심: type이 'chat'인 것만 화면에 띄움
-                if (data.type === 'chat') {
-                    const container = document.getElementById('chat-container');
-                    const div = document.createElement('div');
-                    div.className = 'chat-bubble';
-                    div.innerHTML = `<div class="nick">${data.nickname}</div><div class="msg">${data.message}</div>`;
-                    container.appendChild(div);
-                    if (container.children.length > 15) container.removeChild(container.firstChild);
-                }
-            };
-            socket.onclose = () => setTimeout(connect, 3000);
-        }
-        connect();
+        const socket = new WebSocket('ws://localhost:8765');
+        socket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'alert') {
+                const container = document.getElementById('alert-container');
+                const div = document.createElement('div');
+                div.className = 'alert-box';
+                div.style.borderLeftColor = data.color;
+                div.innerHTML = `<div class="title" style="color:${data.color}">${data.title}</div><div class="message">${data.message}</div>`;
+                container.appendChild(div);
+                setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 500); }, 5000);
+            }
+        };
     </script>
 </body>
 </html>
